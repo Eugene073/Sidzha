@@ -157,13 +157,14 @@ class Game:
                             if res == "yes":
                                 self.board = [[None for _ in range(self.BOARD_SIZE)] for _ in range(self.BOARD_SIZE)]
                                 self.players = ['Игрок', 'Компьютер']
-                                self.colors = {'Игрок': (255, 0, 0), 'Компьютер': (0, 255, 0)}
+                                self.colors = {'Игрок': (255, 255, 255), 'Компьютер': (0, 0, 0)}
                                 self.current_player = self.players[0]
                                 self.circles = {'Игрок': ((self.BOARD_SIZE * self.BOARD_SIZE) - 1) / 2,
                                                 'Компьютер': ((self.BOARD_SIZE * self.BOARD_SIZE) - 1) / 2}
                                 self.game_phase = 1
                                 self.winner = None
                                 self.lst_psn = None
+                                self.run()
                             else:
                                 pygame.display.flip()
                                 pygame.time.wait(5000)
