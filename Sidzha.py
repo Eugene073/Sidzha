@@ -61,17 +61,12 @@ class Game:
             player_cells = [(i, j) for i in range(self.BOARD_SIZE) for j in range(self.BOARD_SIZE) if
                             self.board[i][j] == player]
             random.shuffle(player_cells)
-
             for i, j in player_cells:
                 for di, dj in directions:
                     if 0 <= i + di < self.BOARD_SIZE and 0 <= j + dj < self.BOARD_SIZE and self.board[i + di][j + dj] is None:
-                        # Проверка, что ход приведет к захвату
-                        if 0 <= i + 2 * di < self.BOARD_SIZE and 0 <= j + 2 * dj < self.BOARD_SIZE and \
-                                self.board[i + 2 * di][j + 2 * dj] == player:
+                        if 0 <= i + 2 * di < self.BOARD_SIZE and 0 <= j + 2 * dj < self.BOARD_SIZE and self.board[i + 2 * di][j + 2 * dj] == player:
                             self.handle_turn(player, i, j)
                             self.handle_turn(player, i + di, j + dj)
-                            # Удаление захваченной фишки
-                            self.board[i + 2 * di][j + 2 * dj] = None
                             return
 
             for i, j in player_cells:
