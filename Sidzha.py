@@ -8,19 +8,20 @@ from tkinter import font as tkfont
 
 class Game:
     def __init__(self):
-        self.BOARD_SIZE = 5
-        self.WINDOW_SIZE = self.BOARD_SIZE * 100
+        self.BOARD_SIZE = 5  # Размер игрового поля
+        self.WINDOW_SIZE = self.BOARD_SIZE * 100  # Размер окна
         pygame.init()
         self.window = pygame.display.set_mode((self.BOARD_SIZE * 100, self.BOARD_SIZE * 100))
         pygame.display.set_caption('Сиджа')
-        self.board = [[None for _ in range(self.BOARD_SIZE)] for _ in range(self.BOARD_SIZE)]
-        self.players = ['Игрок', 'Компьютер']
-        self.colors = {'Игрок': (255, 255, 255), 'Компьютер': (0, 0, 0)}
-        self.current_player = self.players[0]
-        self.circles = {'Игрок': ((self.BOARD_SIZE*self.BOARD_SIZE)-1)/2, 'Компьютер': ((self.BOARD_SIZE*self.BOARD_SIZE)-1)/2}
-        self.game_phase = 1
-        self.winner = None
-        self.lst_psn = None
+        self.board = [[None for _ in range(self.BOARD_SIZE)] for _ in range(self.BOARD_SIZE)]  # Игровое поле
+        self.players = ['Игрок', 'Компьютер']  # Игроки
+        self.colors = {'Игрок': (255, 255, 255), 'Компьютер': (0, 0, 0)}  # Цвета фишек игроков
+        self.current_player = self.players[0]  # Текущий игрок
+        self.circles = {'Игрок': ((self.BOARD_SIZE*self.BOARD_SIZE)-1)/2, 'Компьютер': ((self.BOARD_SIZE*self.BOARD_SIZE)-1)/2}  # Количество фишек у игроков
+        self.game_phase = 1  # Фаза игры
+        self.winner = None  # Победитель
+        self.lst_psn = None  # Последняя позиция
+        self.center_checked = False
 
     def draw_board(self):
         # Отрисовка игрового поля
@@ -46,9 +47,7 @@ class Game:
 
     def ai_turn(self, player):
         # Ход ИИ
-        # Разграничение игроков для ИИ
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-
         if self.game_phase == 1:
             empty_cells = [(i, j) for i in range(self.BOARD_SIZE) for j in range(self.BOARD_SIZE) if
                            self.board[i][j] is None]
@@ -84,44 +83,52 @@ class Game:
             elif not self.any_posible_movs('Компьютер'):
                 self.winner = 'Игрок'
 
+    def check_center(self):
+        # Проверка центральной клетки
+        center = self.BOARD_SIZE // 2
+        surrounding_cells = [(center - 1, center), (center + 1, center), (center, center - 1), (center, center + 1)]
+        surrounding_players = [self.board[i][j] for i, j in surrounding_cells if self.board[i][j] is not None]
+        if len(set(surrounding_players)) == 1:
+            return surrounding_players[0]
+        else:
+            return None
+
     def handle_turn(self, player, i, j):
         # Обработка хода
         opponent = self.players[0] if player == self.players[1] else self.players[1]
+
         if self.game_phase == 1:
             if self.board[i][j] is None and (i, j) != (self.BOARD_SIZE // 2, self.BOARD_SIZE // 2):
                 self.board[i][j] = player
                 self.circles[player] -= 1
                 if self.circles['Игрок'] == 0 and self.circles['Компьютер'] == 0:
                     self.game_phase = 2
-                    # Проверка, кто окружил центральную клетку
-                    for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                        if self.board[self.BOARD_SIZE // 2 + di][self.BOARD_SIZE // 2 + dj] == player:
-                            self.current_player = player
-                            break
-                        elif self.board[self.BOARD_SIZE // 2 + di][self.BOARD_SIZE // 2 + dj] == opponent:
-                            self.current_player = opponent
-                            break
-                else:
-                    self.current_player = opponent
+                self.current_player = opponent
                 self.lst_psn = None
         elif self.game_phase == 2:
+            if not self.center_checked:
+                center_player = self.check_center()
+                if center_player is not None:
+                    self.current_player = center_player
+                    self.center_checked = True
             if self.lst_psn is not None and self.board[i][j] is None:
                 old_i, old_j = self.lst_psn
                 # Проверка, что фишка перемещается на одну клетку по горизонтали или вертикали
                 if abs(old_i - i) + abs(old_j - j) == 1:
                     self.board[old_i][old_j] = None
                     self.board[i][j] = player
+                    capture_made = False
                     for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                         if 0 <= i + di < self.BOARD_SIZE and 0 <= j + dj < self.BOARD_SIZE:
                             if self.board[i + di][j + dj] == opponent and \
-                                                                                                               0 <= i + 2 * di < self.BOARD_SIZE and 0 <= j + 2 * dj < self.BOARD_SIZE and \
-                                                                                                               self.board[i + 2 * di][
-                                                                                                                   j + 2 * dj] == player:
+                                    0 <= i + 2 * di < self.BOARD_SIZE and 0 <= j + 2 * dj < self.BOARD_SIZE and \
+                                    self.board[i + 2 * di][j + 2 * dj] == player:
                                 self.board[i + di][j + dj] = None
-                    self.lst_psn = None
+                                capture_made = True
                     self.check_sidzha_winner()
-                    if self.winner is None:
+                    if not capture_made or self.winner is not None:
                         self.current_player = opponent
+                    self.lst_psn = None
             elif self.board[i][j] == player:
                 self.lst_psn = (i, j)
 
